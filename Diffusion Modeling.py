@@ -31,6 +31,7 @@ v_initial = v
 # this is a term that take all the multiplication terms at each time step of the finite difference model into one term
 # In the future I can update this every timestep if temperature changes with time.
 # also update boundary conditions with time
+
 delta = (DH2O * dt)/ (dX **2)
 delta
 mat_base = np.zeros(N_points)
@@ -45,12 +46,18 @@ B[0,1] , B[-1,-2] = 0 , 0
 def time_steper(v_in, timesteps, boundaries):
 """
 Steps a finite element 1D diffusion model forward.
-parameters:
+
+parameters
+----------------
 v_in: input concentration profile (N x 1) column vector
 timesteps : number of timesteps to calculate.
 boundaries : Boundary conditions
 
+Return
+--------------
+ An updated concentration profile.
 """
+
     v_loop = v_in
     for x in range(timesteps):
         v_loop = B * v_loop
