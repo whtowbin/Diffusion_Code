@@ -132,7 +132,9 @@ ax.set_ylabel('H2O ppm')
 
 # %%
 
-percent_eq = 50
+# Iterate 1% , 50% and 90%equilibration to make final plot
+
+
 N_points = 50
 profile_length = 500 # Microns
 dX = profile_length / (N_points -1) # Microns
@@ -144,30 +146,39 @@ initial_C = 100 # ppm
 v = np.mat(np.ones(N_points)* initial_C).T
 v[0], v[-1] = boundary, boundary
 v_initial = v
-df = pd.DataFrame(index = [10,100], columns=range(900, 1350,50))
+df1 = pd.DataFrame(index = [10,100,200], columns=range(900, 1350,50))
+df50 = pd.DataFrame(index = [10,100,200], columns=range(900, 1350,50))
+df90 = pd.DataFrame(index = [10,100,200], columns=range(900, 1350,50))
 
-for T_C2 in range(900, 1350,50):
-    T_K2 = T_C2+273;
-    for F_cpx2 in [10,100]:
-        D_cpx2 = (1e12*(10**(-3))*np.exp(-181000/(8.314*T_K2))/F_cpx2)
+Panels = [df1, df50, df90]
+for idx, percent_eq in enumerate([1, 50, 90]):
+    percent_remain = 100 - percent_eq
+    df = Panels[idx]
+    for T_C2 in range(900,1350,25):
+        T_K2 = T_C2+273;
+        for F_cpx2 in [10, 100, 200]:
+            D_cpx2 = (1e12*(10**(-3))*np.exp(-181000/(8.314*T_K2))/F_cpx2)
 
-        v_loop = v_initial
-        time = 15*60
-        time_tot= 0
-        while np.max(v_loop) > percent_eq:
-                time = 15*60
-                time_tot= 15*60 + time_tot
-                dt = 1
-                B = diffusion_matrix(D_cpx2,dt,dX)
-                v_loop = time_steper(v_loop, B, time)
-                if np.max(v_loop) < percent_eq:
-                    df.loc[F_cpx2][T_C2] = time_tot/60
+            v_loop = v_initial
+            time = 11*60
+            time_tot= 0
+            while np.max(v_loop) > percent_remain:
+                    time = 1*60
+                    time_tot= 1*60 + time_tot
+                    dt = 1
+                    B = diffusion_matrix(D_cpx2,dt,dX)
+                    v_loop = time_steper(v_loop, B, time)
+                    if np.max(v_loop) < percent_remain:
+                        df.loc[F_cpx2][T_C2] = time_tot/60
 
 
-df
+df1
+df50
+df90
 # %%
+
 T_K2 = 1200+273;
-time = 50*60
+time = 15*60
 time_tot= 15*60 + time_tot
 D_cpx2 = (1e12*(10**(-3))*np.exp(-181000/(8.314*T_K2))/100)
 dt = 1
@@ -176,28 +187,34 @@ v_loop1 = time_steper(v_initial, B, 0)
 v_loop2 = time_steper(v_initial, B, time)
 plt.plot(Distances,v_loop1)
 plt.plot(Distances,v_loop2)
+
 # %%
+# df1 = df
 #df90 = df
+# df50 = df
+
 font = {'family' : 'normal',
         'weight' : 'bold',
         'size'   : 20}
 
 plt.rc('font', **font)
 fix, ax = plt.subplots(figsize =(12,8))
-#df.iloc[0].plot(label = '10X slower than Olivine',lw =4)
-df90.iloc[1].plot(label = '90% Equilibrated with Mamga', lw = 4)
-df.iloc[1].plot(label = '50% Equilibrated with Mamga', lw = 4)
+
+#df90.iloc[2].plot(label = '90% Equilibrated with Mamga', lw = 4, c = '#1f77b4')
+#df50.iloc[2].plot(label = '50% Equilibrated with Mamga', lw = 4, c = '#ff7f0e')
+df1.iloc[2].plot(label = 'Initial Concentration Preserved in Core', lw = 4, c = '#d62728')
 plt.plot(x= [800, 1400], y = [300, 300], color='k', linestyle='-', linewidth=2,)
 ax.set_xlabel('Temperature ˚C')
 ax.set_ylabel('Minutes to Equilibrate')
 ax.set_title('Time to Equilibrate Water in 0.5mm Clinopyroxene')
 
-ax.fill_between([800,1350], [300,300], [700,700], color = 'green', alpha=0.5)
+ax.fill_between([800,1350], [300,300], [700,700], color = 'green', alpha=0.3)
 ax.legend()
 plt.savefig('Time to eq cpx')
-ax.annotate('0.05 MPa/s ',xy= (910,300))
+ax.annotate('0.05 MPa/s ',xy= (1200,710), color = 'green')
 ax.set_xlim(900,1300)
-plt.savefig('Time to eq cpx_1')
+ax.set_ylim(0,15000)
+plt.savefig('Time to eq cpx_200slow_3')
 
 
 # %%
