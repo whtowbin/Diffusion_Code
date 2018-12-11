@@ -8,7 +8,11 @@ from matplotlib import pyplot as plt
 
 T_C = 1200;
 T_K = T_C+273;
-DH2O = 1e12*(10**(-5.4))*np.exp(-130000/(8.314*T_K))  # Ferriss diffusivity in um2/s
+DH2O = 1e12*(10**(-5.4))*np.exp(-130000/(8.314*T_K)) # Ferriss diffusivity in um2/s
+logDH2O = np.log10(DH2O/1e12)
+logDH2O
+
+
 # These are critical for stability of model. Must think about time steps and model points.
 N_points = 100
 profile_length = 1500 # Microns
@@ -21,8 +25,8 @@ max_time_step = DH2O**2 / (4*dX)
 max_time_step
 dt = 0.5 #1 #0.0973 # time step seconds
 
-boundary = 0 #ppm
-initial_C = 10 # ppm
+boundary = 10 #ppm
+initial_C = 18 # ppm
 
 v = np.mat(np.ones(N_points)* initial_C).T
 v[0], v[-1] = boundary, boundary
@@ -63,33 +67,137 @@ Return
  """
 
     v_loop = v_in
-    for idx, x in enumerate(range(timesteps)):
+    for idx, x in enumerate(range(round(timesteps))):
         v_loop = Diff_Matrix * v_loop
-        if boundaries is not None:
+        #if boundaries is not None:
             # this currently wont work. I need to make it so the boundaries and timesteps are the same.
-            v_loop[0], v_loop[-1] = boundaries[idx]
+            #v_loop[0], v_loop[-1] = boundaries[idx], boundaries[idx]
     return v_loop
 
 
 B = diffusion_matrix(DH2O,dt,dX)
 
-fig, ax = plt.subplots(figsize=(12,8))
-plt.plot(Distances, time_steper(v, B, 0) )
-plt.plot(Distances, time_steper(v, B, 10))
-plt.plot(Distances, time_steper(v, B, 100))
-plt.plot(Distances, time_steper(v, B, 1000))
-plt.plot(Distances, time_steper(v, B, 10000))
+def plot_profiles(v,B,times_seconds, Distances, dt):
+    fig, ax = plt.subplots(figsize=(12,8))
+    for time in times_seconds:
+        plt.plot(Distances, time_steper(v, B, round(time/dt)), label = str(time/60) + " Minutes")
+
+    ax.legend(loc =1)
+    ax.set_xlabel("Distance to center of crystal ")
+    ax.set_ylabel("ppm water")
+
+times = [0, 60*5,15*60, 60*60, 60*60*1.5, 60*60*2]
+
+plot_profiles(v,B,times, Distances, dt)
+plt.savefig(" Olivine Diffusion Stalled 18ppm initial")
+# time given in seconds then divided by dt to give number of steps
+
+"""
+plt.plot(Distances, time_steper(v, B, 0/dt) )
+plt.plot(Distances, time_steper(v, B, 10/dt))
+plt.plot(Distances, time_steper(v, B, 100/dt))
+plt.plot(Distances, time_steper(v, B, 1000/dt))
+plt.plot(Distances, time_steper(v, B, 7000/dt))
+plt.plot(Distances, time_steper(v, B, 10000/dt))
 
 ax.set_xlabel("Distance to center of crystal ")
 ax.set_ylabel("ppm water")
+ 7000/dt/60
 
-#plt.savefig(" ")
-
-D_OPX = 1e12*(10**(-3))*np.exp(-181000/(8.314*T_K))  * 10
-D_CPX = 1e12*(10**(-3))*np.exp(-181000/(8.314*T_K))  * 100
-
+"""
+D_OPX = 1e12*(10**(-3))*np.exp(-181000/(8.314*T_K))  / 10
+D_CPX = 1e12*(10**(-3))*np.exp(-181000/(8.314*T_K))  / 500
 
 
+
+DH2O
+# %%
+import pynams.diffusion.models as pydiff
+
+
+
+# CPX Diffusion
+D_CPX = 1e12*(10**(-3))*np.exp(-181000/(8.314*T_K))  / 100
+f,a,x,y = pydiff.diffusion1D(300, np.log10(D_CPX/10**12),  60*60,  maximum_value = 100, init = 100, fin=0);
+
+fig, ax = plt.subplots(figsize = (12,8))
+plt.plot(x,y)
+max(y)
+min(y)
+CPX_Distances = np.array([123,217,34,80,178,176,213,40,171,37,129,51,116,94,222,33])
+CPX_Concentration = np.array([587.84,550.13,502.16,600.01,555.79,462.74,584.46,482.85,600.11,515.52,579.71,585.51,578.85,467.86,575.57,459.29])
+plt.plot(CPX_Distances - 150, CPX_Concentration, marker='o' , linestyle ='None')
+ax.set_xlabel('Distance (Microns)')
+ax.set_ylabel('H2O ppm')
+
+# %%
+
+percent_eq = 50
+N_points = 50
+profile_length = 500 # Microns
+dX = profile_length / (N_points -1) # Microns
+
+Distances = [0+dX*Y - profile_length/2 for Y in range(N_points)]
+
+boundary = 0 #ppm
+initial_C = 100 # ppm
+v = np.mat(np.ones(N_points)* initial_C).T
+v[0], v[-1] = boundary, boundary
+v_initial = v
+df = pd.DataFrame(index = [10,100], columns=range(900, 1350,50))
+
+for T_C2 in range(900, 1350,50):
+    T_K2 = T_C2+273;
+    for F_cpx2 in [10,100]:
+        D_cpx2 = (1e12*(10**(-3))*np.exp(-181000/(8.314*T_K2))/F_cpx2)
+
+        v_loop = v_initial
+        time = 15*60
+        time_tot= 0
+        while np.max(v_loop) > percent_eq:
+                time = 15*60
+                time_tot= 15*60 + time_tot
+                dt = 1
+                B = diffusion_matrix(D_cpx2,dt,dX)
+                v_loop = time_steper(v_loop, B, time)
+                if np.max(v_loop) < percent_eq:
+                    df.loc[F_cpx2][T_C2] = time_tot/60
+
+
+df
+# %%
+T_K2 = 1200+273;
+time = 50*60
+time_tot= 15*60 + time_tot
+D_cpx2 = (1e12*(10**(-3))*np.exp(-181000/(8.314*T_K2))/100)
+dt = 1
+B = diffusion_matrix(D_cpx2,dt,dX)
+v_loop1 = time_steper(v_initial, B, 0)
+v_loop2 = time_steper(v_initial, B, time)
+plt.plot(Distances,v_loop1)
+plt.plot(Distances,v_loop2)
+# %%
+#df90 = df
+font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 20}
+
+plt.rc('font', **font)
+fix, ax = plt.subplots(figsize =(12,8))
+#df.iloc[0].plot(label = '10X slower than Olivine',lw =4)
+df90.iloc[1].plot(label = '90% Equilibrated with Mamga', lw = 4)
+df.iloc[1].plot(label = '50% Equilibrated with Mamga', lw = 4)
+plt.plot(x= [800, 1400], y = [300, 300], color='k', linestyle='-', linewidth=2,)
+ax.set_xlabel('Temperature ˚C')
+ax.set_ylabel('Minutes to Equilibrate')
+ax.set_title('Time to Equilibrate Water in 0.5mm Clinopyroxene')
+
+ax.fill_between([800,1350], [300,300], [700,700], color = 'green', alpha=0.5)
+ax.legend()
+plt.savefig('Time to eq cpx')
+ax.annotate('0.05 MPa/s ',xy= (910,300))
+ax.set_xlim(900,1300)
+plt.savefig('Time to eq cpx_1')
 
 
 # %%
