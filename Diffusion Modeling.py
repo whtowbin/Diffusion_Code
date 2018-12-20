@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 # %%
 # I am writing a code that will  support diffusion modeling
 
-T_C = 1200;
+T_C = 1000;
 T_K = T_C+273;
 DH2O = 1e12*(10**(-5.4))*np.exp(-130000/(8.314*T_K)) # Ferriss diffusivity in um2/s
 logDH2O = np.log10(DH2O/1e12)
@@ -176,17 +176,28 @@ df1
 df50
 df90
 # %%
+font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 20}
 
+plt.rc('font', **font)
+fix, ax = plt.subplots(figsize =(12,8))
+fig, ax = plt.subplots(figsize = (12,8))
 T_K2 = 1200+273;
-time = 15*60
+time = 35*60
 time_tot= 15*60 + time_tot
-D_cpx2 = (1e12*(10**(-3))*np.exp(-181000/(8.314*T_K2))/100)
+D_cpx2 = (1e12*(10**(-3))*np.exp(-181000/(8.314*T_K2))/200)
 dt = 1
 B = diffusion_matrix(D_cpx2,dt,dX)
-v_loop1 = time_steper(v_initial, B, 0)
-v_loop2 = time_steper(v_initial, B, time)
-plt.plot(Distances,v_loop1)
-plt.plot(Distances,v_loop2)
+v_loop1 = time_steper(v_initial, B, 0,)
+v_loop2 = time_steper(v_initial, B, time, )
+plt.plot(Distances,v_loop1,linewidth =3, label = "Initial")
+plt.plot(Distances,v_loop2, linewidth =3,label = "35 Minutes")
+ax.legend()
+ax.set_ylabel('% Initial Concnetration')
+ax.set_xlabel('Distance Microns')
+plt.savefig('Core_Preserved')
+
 
 # %%
 # df1 = df
@@ -200,21 +211,21 @@ font = {'family' : 'normal',
 plt.rc('font', **font)
 fix, ax = plt.subplots(figsize =(12,8))
 
-#df90.iloc[2].plot(label = '90% Equilibrated with Mamga', lw = 4, c = '#1f77b4')
-#df50.iloc[2].plot(label = '50% Equilibrated with Mamga', lw = 4, c = '#ff7f0e')
-df1.iloc[2].plot(label = 'Initial Concentration Preserved in Core', lw = 4, c = '#d62728')
-plt.plot(x= [800, 1400], y = [300, 300], color='k', linestyle='-', linewidth=2,)
+#df90.iloc[2].plot(label = '90% Equilibrated with Magma', lw = 4, c = '#1f77b4')
+#df50.iloc[2].plot(label = '50% Equilibrated with Magma', lw = 4, c = '#ff7f0e')
+df1.iloc[2].plot(label = 'Initial Concentration Preserved only in Core', lw = 4, c = '#d62728')
+#plt.plot(x= [800, 1400], y = [300, 300], color='k', linestyle='-', linewidth=2,)
 ax.set_xlabel('Temperature ˚C')
 ax.set_ylabel('Minutes to Equilibrate')
 ax.set_title('Time to Equilibrate Water in 0.5mm Clinopyroxene')
 
 ax.fill_between([800,1350], [300,300], [700,700], color = 'green', alpha=0.3)
-ax.legend()
+ax.legend(loc =2)
 plt.savefig('Time to eq cpx')
-ax.annotate('0.05 MPa/s ',xy= (1200,710), color = 'green')
+ax.annotate('0.05 MPa/s ',xy= (1215,710), color = 'green')
 ax.set_xlim(900,1300)
-ax.set_ylim(0,15000)
-plt.savefig('Time to eq cpx_200slow_3')
+ax.set_ylim(0,2000)
+plt.savefig('Time to eq cpx_200slow_1%_zoom_')
 
 
 # %%
