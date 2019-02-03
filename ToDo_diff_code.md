@@ -16,4 +16,4 @@
 
 - What Should I assume for the Opx diffusivity? 10^-11 ?
 
-For now I will use my code for the beginning then megan's code to finish the fits. 
+For now I will use my code for the beginning then Megan's code to finish the fits.
