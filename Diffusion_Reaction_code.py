@@ -27,8 +27,8 @@ eq1_new = eq1.subs({Ti_Cli: eq4})
 eqk_new = eqk.subs({Ti_Cli: eq4})
 
 # %%
-
-sympy.solve(eq1_new, sum_Ti)
+f1 = eq1-eq2-eqk
+sympy.solve(f1, Ti_Cli)
 # %%
 
 x, y, z = sympy.symbols('x y z')
@@ -44,7 +44,7 @@ expr2
 type(expr4)
 type(expr2)
 # %%
-sympy.linsolve([eq1, eq2, eqk], (K, Ti_Cli, Ti_si, H_m, sum_Ti, sum_H))
+sympy.solve([eq1, eq2, eqk], [Ti_Cli, Ti_si, H_m])
 # %%
 def diffusion_matrix(DH2O, dt, dx, N_points):
 """
