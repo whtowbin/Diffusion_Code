@@ -22,10 +22,13 @@ eq2 = (sum_H - H_m - Ti_Cli)
 eqk = (K * Ti_Cli - (Ti_si * H_m))
 
 # %%
-eq4 = sympy.solve(eq2,Ti_Cli)
-eq1_new = eq1.subs({Ti_Cli: eq4})
-eqk_new = eqk.subs({Ti_Cli: eq4})
-
+eq = sympy.solve(eq2,Ti_Cli)
+eq1_new = eq1.subs({Ti_Cli: eq[0]})
+eqk_new = eqk.subs({Ti_Cli: eq[0]})
+# %%
+eq = sympy.solve(eq1_new, Ti_si)
+eqk_new = eqk_new.subs(Ti_si, eq[0])
+sympy.solve(eqk_new, H_m)
 # %%
 f1 = eq1-eq2-eqk
 sympy.solve(f1, Ti_Cli)
@@ -44,7 +47,7 @@ expr2
 type(expr4)
 type(expr2)
 # %%
-sympy.solve([eq1, eq2, eqk], [Ti_Cli, Ti_si, H_m])
+sympy.solve([eq1, eqk, eq2], [Ti_si, Ti_Cli, sum_H] , dict=True)
 # %%
 def diffusion_matrix(DH2O, dt, dx, N_points):
 """
@@ -88,12 +91,26 @@ Return
 --------------
  An updated concentration profile.
     """
+    K = 0.8 # First approx from some abs ratios 
+    sum_Ti = 400 # We should estimate this based on ppm divided by molar mass compared to H/molar-mass 
+    # H_m K and Sum_Ti should be the inputs 
 
-    Ti_si_loop = Ti_si
-    H_m_loop = H_m
-    Ti_Cli_loop = Ti_Cli
+    #Ti_si_loop = Ti_si
+    #H_m_loop = H_m
+    #Ti_Cli_loop = Ti_Cli
+    Ti_si_loop = K*sum_Ti/(H_m_loop + K)
+    Ti_Cli_loop = H_m_loop * sum_Ti/(H_m_loop + K)
+    sum_H_loop = H_m_loop*(H_m_loop + K + sum_Ti)/(H_m_loop + K)
+
     for idx, x in enumerate(range(round(timesteps))):
         H_m_loop = Diff_Matrix * H_m_loop
+
+        Ti_si_loop = K*sum_Ti/(H_m_loop + K)
+        Ti_Cli_loop = H_m_loop * sum_Ti/(H_m_loop + K)
+        sum_H_loop = H_m_loop*(H_m_loop + K + sum_Ti)/(H_m_loop + K)
+
+        H_m_loop = (sum_H_loop - Ti_Cli)
+
 
         #then update all defects with reaction equations.
         
@@ -104,3 +121,6 @@ Return
 
 
 B = diffusion_matrix(.000000001, 1, .0001)
+
+
+
