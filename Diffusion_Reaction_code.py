@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 # %%
 '''
-Anna testing 123
+Anna testing 123, Great! 
 {Ti_m + 2H_si} = [Ti_si] + [2H_m]
 
 K = ([Ti_si][2H_m])/[Ti_m+2H_si]
