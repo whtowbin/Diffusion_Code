@@ -6,14 +6,6 @@ from numba import jit
 from matplotlib import pyplot as plt
 
 # %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
 '''
 {Ti_m + 2H_si} = [Ti_si] + [2H_m]
 
@@ -26,11 +18,20 @@ sum_H = [2H_m] + [Ti_m+2H_si]
 eq = solve(eq2,Ti_Cli)
 eq1 = subs(eq1,Ti_Cli, eq)
 '''
-K, Ti_Cli, Ti_si, H_m, sum_Ti, sum_H = sympy.symbols("K Ti_Cli Ti_si H_m sum_Ti sum_H")
+K = sympy.symbols("K", positive=True)
+Ti_Cli, Ti_si, H_m, sum_Ti, sum_H = sympy.symbols("Ti_Cli Ti_si H_m sum_Ti sum_H", positive =True)
+
+
 #%%
 eq1 = (sum_Ti - Ti_si - Ti_Cli)
 eq2 = (sum_H - H_m - Ti_Cli)
 eqk = (K * Ti_Cli - (Ti_si * H_m))
+
+# %%
+
+# %%
+
+# %%
 
 # %%
 
@@ -54,15 +55,31 @@ expr4 = sympy.solveset(exp3, x )
 #exp4 = y/6
 expr2 = expr.subs(x, exp4)
 expr2
-# %%
-expr2
-# %%
-type(expr4)
-type(expr2)
+
 # %%
 sympy.solve([eq1, eqk, eq2], [Ti_si, Ti_Cli, sum_H] , dict=True)
 # %%
-sympy.solve([eq1, eqk, eq2], [Ti_si, Ti_Cli, sum_H], dict=True)
+Equations = sympy.nonlinsolve([eq1, eqk, eq2], [Ti_si, Ti_Cli]) 
+str(Equations)
+# %%
+
+
+def DH2O_Ol(T_C):
+    """
+This function returns the diffusivity of H+ cations along the a [100] axis in
+olivine at a given temperature in Celcius.
+Ferriss et al. 2018 diffusivity in um2/s
+
+Parameters:
+T_C: Temperature in degrees C
+
+Returns:
+The diffusivity of H+ cations along the a [100] axis of olivine in um^2/S
+    """
+    T_K = T_C + 273
+    DH2O = 1e12 * (10 ** (-5.4)) * np.exp(-130000 / (8.314 * T_K))
+    return DH2O
+
 # %%
 def diffusion_matrix(DH2O, dt, dx, N_points):
     """
@@ -92,10 +109,9 @@ def diffusion_matrix(DH2O, dt, dx, N_points):
     B[0, 1], B[-1, -2] = 0, 0  # For fixed boundary condition
     return B
 
-
-#@jit(nopython=True)
+# %%
+@jit(nopython=True)
 def time_steper(H_mvector, Diff_Matrix, timesteps, sum_Ti=400, K=0.8, boundaries=None):
-#def time_steper(Ti_si, H_m, Ti_Cli, Diff_Matrix, timesteps, boundaries=None):
     """
 Steps a finite element 1D diffusion model forward.
 
@@ -109,15 +125,13 @@ Return
 --------------
  An updated concentration profile.
     """
-    #K = 0.8 # First approx from some abs ratios 
-    #sum_Ti = 400 # We should estimate this based on ppm divided by molar mass compared to H/molar-mass 
-    # H_m, K and Sum_Ti should be the inputs 
 
-    #Ti_si_loop = Ti_si
-    #H_m_loop = H_m
-    #Ti_Cli_loop = Ti_Cli
     H_m_loop= H_mvector
     
+    #Ti_si_loop=- (H_m_loop*K - K * sum_H_loop)/H_m
+    #Ti_Cli_loop= -H_m_loop + sum_H_loop
+    # I need to determine how Sum_H Progresses...
+
     Ti_si_loop = K*sum_Ti/(H_m_loop + K)
     Ti_Cli_loop = H_m_loop * sum_Ti/(H_m_loop + K)
     sum_H_loop = np.multiply(H_m_loop, (H_m_loop + K + sum_Ti))/(H_m_loop + K)
@@ -125,7 +139,7 @@ Return
     
     #for idx, x in enumerate(range(round(timesteps))):
     for x in range(round(timesteps)):
-        H_m_loop = Diff_Matrix * H_m_loop
+        H_m_loop = Diff_Matrix @ H_m_loop
         # Question for Mike: Do we need to calculate all concentrations at each step of the loop or only once to update how H_m changesand then calcualte the rest at the end? 
         # Question 2: How should we constrain total water. What if Sum_H or Sum Ti constrains Ti_Clin. A it stands The total water isnt being constrained it is just calcualted based on the K relationship
 
@@ -147,7 +161,7 @@ Return
 # %%
 
 # %%
-
+#%%timeit -r 100
 
 dt = 0.5  # 1 #0.0973 # time step seconds
 N_points = 100
@@ -161,44 +175,14 @@ v_initial = v
 
 B = diffusion_matrix(DH2O = DH2O_Ol(1200), dt= dt, dx = dX, N_points= 100)
 
-dicts= time_steper(v_initial, sum_Ti = 60, K=0.8, Diff_Matrix =B, timesteps = 60*1, boundaries=None)
+dicts= time_steper(v_initial, sum_Ti = 60, K=0.9, Diff_Matrix =B, timesteps = 60*60, boundaries=None)
 
 plt.plot(dicts['H_m_loop'], Label = 'H_m')
 plt.plot(dicts['Ti_Cli_loop'],Label='Ti_Cli')
 plt.plot(dicts['sum_H_loop'], Label='Total_H')
+
 plt.legend()
-# %%
 
-# %%
 
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
 
 # %%
