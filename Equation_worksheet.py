@@ -39,15 +39,6 @@ Ti_Cli, Ti_si, H_m, sum_Ti, sum_H, Fe3V, sumFe, Fe2_m = sympy.symbols(
 
 # %%
 
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
 
 #%%
 eq1 = (sum_Ti - Ti_si - Ti_Cli)

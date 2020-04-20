@@ -111,8 +111,9 @@ def diffusion_matrix(DH2O, dt, dx, N_points):
     return B
 
 # %%
-@jit(nopython=True)
-def time_steper(H_mvector, Diff_Matrix, timesteps, sum_Ti=400, K=0.8, boundaries=None):
+
+
+def time_steper(sum_H, Diff_Matrix, timesteps, N_points, sum_Ti=400, K=0.8, boundaries=None):
     """
 Steps a finite element 1D diffusion model forward.
 
@@ -127,35 +128,44 @@ Return
  An updated concentration profile.
     """
 
-    H_m_loop= H_mvector
-    
-    #Ti_si_loop=- (H_m_loop*K - K * sum_H_loop)/H_m
-    #Ti_Cli_loop= -H_m_loop + sum_H_loop
-    # I need to determine how Sum_H Progresses...
 
-    Ti_si_loop = K*sum_Ti/(H_m_loop + K)
-    Ti_Cli_loop = H_m_loop * sum_Ti/(H_m_loop + K)
-    sum_H_loop = np.multiply(H_m_loop, (H_m_loop + K + sum_Ti))/(H_m_loop + K)
-
+    """
+    Ti_si2 = -K/2 - sum_H/2 + sum_Ti/2 + \
+        sqrt(K**2 + 2*K*sum_H + 2*K*sum_Ti + sum_H **
+            2 - 2*sum_H*sum_Ti + sum_Ti**2)/2
     
+    Ti_Cli2 = K/2 + sum_H/2 + sum_Ti/2 - \
+        sqrt(K**2 + 2*K*sum_H + 2*K*sum_Ti + sum_H **
+            2 - 2*sum_H*sum_Ti + sum_Ti**2)/2
+    """
+    print(K)
+    print(sum_H)
+    print(sum_Ti)
+    H_m2 = -K/2 + sum_H/2 - sum_Ti/2 + np.sqrt(K**2 + 2*K*sum_H + 2*K*sum_Ti + sum_H ** 2 - 2*sum_H*sum_Ti + sum_Ti**2)/2
+    Ti_Cli = sum_H - H_m2
+    Ti_Si = sum_Ti - Ti_Cli
+
+    H_m_loop = np.reshape(np.ones(N_points) * H_m2, (N_points, 1))
+    sum_H_loop = np.ones(N_points) * sum_H
+    Ti_Cli_loop = np.ones(N_points) * Ti_Cli
+    Ti_Si_loop = np.ones(N_points) *Ti_Si
+
     #for idx, x in enumerate(range(round(timesteps))):
     for x in range(round(timesteps)):
         H_m_loop = Diff_Matrix @ H_m_loop
         # Question for Mike: Do we need to calculate all concentrations at each step of the loop or only once to update how H_m changesand then calcualte the rest at the end? 
-        # Question 2: How should we constrain total water. What if Sum_H or Sum Ti constrains Ti_Clin. A it stands The total water isnt being constrained it is just calcualted based on the K relationship
-
-        Ti_si_loop = K*sum_Ti/(H_m_loop + K)
-        Ti_Cli_loop = H_m_loop * sum_Ti/(H_m_loop + K)
-        sum_H_loop = np.multiply(H_m_loop,(H_m_loop + K + sum_Ti))/(H_m_loop + K)
-
-        H_m_loop = (sum_H_loop - Ti_Cli_loop)
+        # Question 2: How should we constrain total water. What if Sum_H or Sum Ti constrains Ti_Clin. A it stands The total water isnt being constrained it is just calculated based on the K relationship
+        sum_H_loop = Ti_Cli_loop + H_m_loop
+        H_m_loop = -K/2 + sum_H_loop/2 - sum_Ti/2 + np.sqrt(K**2 + 2*K*sum_H_loop + 2*K*sum_Ti + sum_H_loop ** 2 - 2*sum_H_loop*sum_Ti + sum_Ti**2)/2
+        Ti_Cli_loop = sum_H_loop - H_m_loop
+        Ti_Si_loop = sum_Ti - Ti_Cli_loop
 
         #then update all defects with reaction equations.
         
         # if boundaries is not None:
         # this currently wont work. I need to make it so the boundaries and timesteps are the same.
         # v_loop[0], v_loop[-1] = boundaries[idx], boundaries[idx]
-    return {'H_m_loop': H_m_loop, 'Ti_si_loop': Ti_si_loop, 'Ti_Cli_loop': Ti_Cli_loop, 'sum_H_loop': sum_H_loop}
+    return {'H_m_loop': H_m_loop, 'Ti_Si_loop': Ti_Si_loop, 'Ti_Cli_loop': Ti_Cli_loop, 'sum_H_loop': sum_H_loop}
 
 # %%
 
@@ -176,7 +186,7 @@ v_initial = v
 
 B = diffusion_matrix(DH2O = DH2O_Ol(1200), dt= dt, dx = dX, N_points= 100)
 
-dicts= time_steper(v_initial, sum_Ti = 60, K=0.9, Diff_Matrix =B, timesteps = 60*60, boundaries=None)
+dicts= time_steper(sum_H =100, sum_Ti = 60, K=0.8, Diff_Matrix =B, timesteps = 60*60, N_points= 100, boundaries=None)
 
 plt.plot(dicts['H_m_loop'], Label = 'H_m')
 plt.plot(dicts['Ti_Cli_loop'],Label='Ti_Cli')
