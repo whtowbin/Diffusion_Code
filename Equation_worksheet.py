@@ -16,7 +16,9 @@ from matplotlib import pyplot as plt
 K = (H_m^2 * Fe2_m^2 * Ti_si)/(Ti_Cli * {2Fe3_m + V_m})
 
 sum_Ti = Ti_Cli + Ti_si
+
 sum_H = H_m + Ti_Cli + {2Fe3_m + V_m} This is wrong it should be sum_H = H_m + Ti_Cli
+
 sum_Fe = Fe2_m + {2Fe3_m + V_m}
 
 
@@ -31,6 +33,9 @@ sum_H = [2H_m] + [Ti_m+2H_si]
 
 eq = solve(eq2,Ti_Cli)
 eq1 = subs(eq1,Ti_Cli, eq)
+
+
+
 '''
 K = sympy.symbols("K", positive = True, real=True)
 Ti_Cli, Ti_si, H_m, sum_Ti, sum_H, Fe3V, sumFe, Fe2_m = sympy.symbols(
