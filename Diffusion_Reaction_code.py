@@ -82,38 +82,28 @@ The diffusivity of H+ cations along the a [100] axis of olivine in um^2/S
     return DH2O
 
 # %%
-def diffusion_matrix(DH2O, dt, dx, N_points):
-    """
-    Makes a matrix that can be used for a finite diference diffusion numerical
-    model.
+def VectorMaker(init_Concentration, N_points):
+    return init_Concentration * np.ones(N_points)
 
-    parameters
-    ----------------
-    DH2O: Diffusivity
-    dt: time step
-    dx: distance between x N_points
-    N_points: number of points in your profile
+def diffusion_kernel(Diffusivity, dt, dx):
+    delta = (Diffusivity * dt) / ((dx) ** 2)
+    kernel = np.zeros(3)
+    kernel[1] = 1 - 2 * delta
+    kernel[0] = delta
+    kernel[2] = delta
+    return kernel
 
-    Return
-    --------------
-     A matrix that can be used to multiply by a concentration profile to
-     make diffusion code 1 timestep. 
-    """
-    delta = (DH2O * dt) / (dx ** 2)
+def boundary_cond(C= 0):
+    # C: single concentration at boundary ( in the future we will support changing boundary conditions)
+    pad = np.ones(3) * C
+    return pad
 
-    mat_base = np.zeros(N_points)
-    mat_base[0] = 1 - 2 * delta
-    mat_base[1] = delta
-
-    B = np.mat(la.toeplitz((mat_base)))
-    B[0, 0], B[-1, -1] = 1, 1 # For fixed boundary condition
-    B[0, 1], B[-1, -2] = 0, 0  # For fixed boundary condition
-    return B
-
+def diffusion_step(vector_in, diffusion_kernel, pad):
+    # pad = np.ones(3) * Bound_Concentration put back in
+    vector = np.concatenate([pad, vector_in, pad])
+    return np.convolve(vector, diffusion_kernel, mode="same")[3:-3]
 # %%
-
-
-def time_steper(sum_H, Diff_Matrix, timesteps, N_points, sum_Ti=400, K=0.8, boundaries=None):
+def time_steper(sum_H, Diffusivity, timesteps, dt=0.5, dx =10 , N_points=100, sum_Ti=100, K=0.8, bound_concentration=0):
     """
 Steps a finite element 1D diffusion model forward.
 
@@ -121,40 +111,35 @@ parameters
 ----------------
 v_in: input concentration profile (N x 1) column vector
 timesteps : number of timesteps to calculate.
-boundaries : Boundary conditions
-
+boundaries : Boundary conditions (limited to single value for now)
+dt: seconds
+dx: microns
 Return
 --------------
  An updated concentration profile.
     """
 
-
-    """
-    Ti_si2 = -K/2 - sum_H/2 + sum_Ti/2 + \
-        sqrt(K**2 + 2*K*sum_H + 2*K*sum_Ti + sum_H **
-            2 - 2*sum_H*sum_Ti + sum_Ti**2)/2
-    
-    Ti_Cli2 = K/2 + sum_H/2 + sum_Ti/2 - \
-        sqrt(K**2 + 2*K*sum_H + 2*K*sum_Ti + sum_H **
-            2 - 2*sum_H*sum_Ti + sum_Ti**2)/2
-    """
-    print(K)
-    print(sum_H)
-    print(sum_Ti)
+  
     H_m2 = -K/2 + sum_H/2 - sum_Ti/2 + np.sqrt(K**2 + 2*K*sum_H + 2*K*sum_Ti + sum_H ** 2 - 2*sum_H*sum_Ti + sum_Ti**2)/2
     Ti_Cli = sum_H - H_m2
     Ti_Si = sum_Ti - Ti_Cli
 
-    H_m_loop = np.reshape(np.ones(N_points) * H_m2, (N_points, 1))
+    H_m_loop = np.ones(N_points) * H_m2
     sum_H_loop = np.ones(N_points) * sum_H
     Ti_Cli_loop = np.ones(N_points) * Ti_Cli
     Ti_Si_loop = np.ones(N_points) *Ti_Si
 
+    # Building diffusion code
+    kernel =diffusion_kernel(Diffusivity, dt, dx) 
+    bound = boundary_cond(C=bound_concentration)
+    
+
+    # Loop to iterate diffusion and reaction
     #for idx, x in enumerate(range(round(timesteps))):
     for x in range(round(timesteps)):
-        H_m_loop = Diff_Matrix @ H_m_loop
-        # Question for Mike: Do we need to calculate all concentrations at each step of the loop or only once to update how H_m changesand then calcualte the rest at the end? 
-        # Question 2: How should we constrain total water. What if Sum_H or Sum Ti constrains Ti_Clin. A it stands The total water isnt being constrained it is just calculated based on the K relationship
+        H_m_loop = diffusion_step(H_m_loop, kernel, bound)
+        # Question for Mike: Do we need to calculate all concentrations at each step of the loop or only once to update how H_m changesand then calculate the rest at the end? 
+     
         sum_H_loop = Ti_Cli_loop + H_m_loop
         H_m_loop = -K/2 + sum_H_loop/2 - sum_Ti/2 + np.sqrt(K**2 + 2*K*sum_H_loop + 2*K*sum_Ti + sum_H_loop ** 2 - 2*sum_H_loop*sum_Ti + sum_Ti**2)/2
         Ti_Cli_loop = sum_H_loop - H_m_loop
@@ -169,31 +154,27 @@ Return
 
 # %%
 
-# %%
-
-# %%
-#%%timeit -r 100
+#%%timeit #-r 100
 
 dt = 0.5  # 1 #0.0973 # time step seconds
 N_points = 100
 profile_length = 1500  # Microns
-dX = profile_length / (N_points - 1)  # Microns
-boundary = 0  # ppm
-initial_C = 20  # ppm
-v = np.mat(np.ones(N_points) * initial_C).T
-v[0], v[-1] = boundary, boundary
-v_initial = v
+dx = profile_length / (N_points - 1)  # Microns
 
-B = diffusion_matrix(DH2O = DH2O_Ol(1200), dt= dt, dx = dX, N_points= 100)
+#dicts= time_steper(sum_H =100, sum_Ti = 60, K=0.8, Diff_Matrix =B, timesteps = 60*60, N_points= 100, boundaries=None)
 
-dicts= time_steper(sum_H =100, sum_Ti = 60, K=0.8, Diff_Matrix =B, timesteps = 60*60, N_points= 100, boundaries=None)
+dicts = time_steper(sum_H=100, Diffusivity=DH2O_Ol(1200), timesteps=60*60,
+                    dt=0.5, dx=10, N_points=100, sum_Ti=100, K=0.8, bound_concentration=0)
 
 plt.plot(dicts['H_m_loop'], Label = 'H_m')
 plt.plot(dicts['Ti_Cli_loop'],Label='Ti_Cli')
 plt.plot(dicts['sum_H_loop'], Label='Total_H')
+
+
 
 plt.legend()
 
 
 
 # %%
+
