@@ -114,6 +114,8 @@ timesteps : number of timesteps to calculate.
 boundaries : Boundary conditions (limited to single value for now)
 dt: seconds
 dx: microns
+sum_H = ppm water in crystal
+sum_Ti = ppm Ti in crystal divide by 5 to scale to molar compared to water
 Return
 --------------
  An updated concentration profile.
@@ -163,18 +165,43 @@ dx = profile_length / (N_points - 1)  # Microns
 
 #dicts= time_steper(sum_H =100, sum_Ti = 60, K=0.8, Diff_Matrix =B, timesteps = 60*60, N_points= 100, boundaries=None)
 
-dicts = time_steper(sum_H=100, Diffusivity=DH2O_Ol(1200), timesteps=60*60,
-                    dt=0.5, dx=10, N_points=100, sum_Ti=100, K=0.8, bound_concentration=0)
-
+dicts = time_steper(sum_H=30, Diffusivity=DH2O_Ol(1200), timesteps=60*60,
+                    dt=0.5, dx=10, N_points=100, sum_Ti=25/5, K=1, bound_concentration=0)
+ 
+fig, ax = plt.subplots(figsize=(12,6))
 plt.plot(dicts['H_m_loop'], Label = 'H_m')
 plt.plot(dicts['Ti_Cli_loop'],Label='Ti_Cli')
 plt.plot(dicts['sum_H_loop'], Label='Total_H')
+#plt.plot(dicts['Ti_Si_loop'], Label='Ti_Si')
+
+
+plt.legend(prop={'size': 20})
 
 
 
-plt.legend()
+# %%
 
+# %%
 
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
 
 # %%
 
