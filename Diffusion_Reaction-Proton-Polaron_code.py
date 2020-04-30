@@ -2,19 +2,41 @@
 import numpy as np
 import scipy.linalg as la
 import sympy as sympy
-from numba import jit
 from matplotlib import pyplot as plt
 
 # %%
 
 # %%
 ''' 
-{Ti_m + 2H_si} = [Ti_si] + [2H_m]
+TODO: Think about whether Trivalent vacancies are mostly just a halfway point in diffusion and those defects and continue to diffuse. Have a population of interstitial hydrogen that can diffuse. All other sites must react with this i in order to move.
+Confused about whether to think of proton polaron as a reaction (like below) or as a 'magic' diffusivity that doesn't get specifically modelled as a reaction 
+Also confused about how to incorporate other defects -- somehow have added an equation but still only really modelling the Ti defect
+Also confused about how to solve equations for multiple defects
+Maybe just need to substitute pp into TiCli equation to get one equation
 
-K = ([Ti_si][2H_m])/[Ti_m+2H_si]
+In spectrum [H_i]+ is the sum of 2*Mg peak and the tri peak..?
+2 Hydrogen on one site and 2 on separate sites. 
 
-sum_Ti = [Ti_si] + [Ti_m+2H_si]
-sum_H = [2H_m] + [Ti_m+2H_si]
+We need to account for how the 2H+ in Mg-vacancies become a Trivalent defect once one of the H+ leaves via proton-polaron. Do we need another K to balance this? Do we instead keep track of loss from each site? probably easier to use a K to balance? 
+
+Ti_Clinohumite to Proton Polaron
+{Ti_m + 2H_si} = [Ti_m + V_si]'' + 2[H_i]+
+
+Proton Polaron
+[H_i]+ + Fe_m = Fe_m+ + H 
+
+Combined first two equations:
+{Ti_m + 2H_si} +2Fe_m = [Ti_m + V_si]'' + 2Fe_m+ + 2H
+
+
+K = ([Ti_m + V_si]'' * [H_i]+)^2 /[Ti_m+2H_si]
+
+K = (Fe_m+ * H) / ([H_i]+ * Fe_m)
+
+sum_Ti = [Ti_m + V_si]'' + [Ti_m+2H_si]
+sum_H = [H_i]+ + 2[Ti_m+2H_si] + H
+sum_Fe = Fe_m + Fe_m+
+
 
 
 eq = solve(eq2,Ti_Cli)
@@ -56,9 +78,9 @@ expr2 = expr.subs(x, exp4)
 expr2
 
 # %%
-sympy.solve([eq1, eqk, eq2], [Ti_si, Ti_Cli, sum_H] , dict=True)
+sympy.linsolve([eq1, eqk, eq2], [Ti_si, Ti_Cli, sum_H])# , dict=True)
 # %%
-Equations = sympy.nonlinsolve([eq1, eqk, eq2], [Ti_si, Ti_Cli]) 
+Equations = sympy.nonlinsolve([eq1, eqk, eq2], [Ti_si, Ti_Cli, H_m]) 
 str(Equations)
 # %%
 
@@ -178,3 +200,4 @@ plt.legend(prop={'size': 20})
 
 #%%
 
+Diffusivity = DH2O_Ol(1200)
