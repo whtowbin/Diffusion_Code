@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import scipy.linalg as la
 import sympy as sympy
@@ -24,10 +25,24 @@ The diffusivity of H+ cations along the a [100] axis of olivine in um^2/S
 
 # %%
 
+def DH2O_GB(T_C):
+    '''
+    This function returns the diffusivity of H + cations along grain boundaries
+    This should be longer in terms of 
+    ''' 
+    T_K = T_C + 273
+    #### Get from Demouchy DH2O = 1e12 * (10 ** (-5.4)) * np.exp(-130000 / (8.314 * T_K))
+    #return DH2O
+    pass
+
+# %%
 
 def VectorMaker(init_Concentration, N_points):
     return init_Concentration * np.ones(N_points)
 
+
+def Multi_vector_Maker(init_Concentration, N_points, kd = 1, N_points_grain=50):
+    return init_Concentration * kd * np.ones(N_points)
 
 def diffusion_kernel(Diffusivity, dt, dx):
     delta = (Diffusivity * dt) / ((dx) ** 2)
@@ -51,3 +66,20 @@ def diffusion_step(vector_in, diffusion_kernel, pad):
 
 # %%
 
+
+
+"""
+Partition water between Grain Boundary and Olivine
+kd= H2O_ol/H2O_GB
+
+kd= H2O_GB/H2O_Magma  # Maybe not needed yet but would be good for degassing 
+
+Sum_H = H2O_ol + H2O_GB
+"""
+y= VectorMaker(init_Concentration=1, N_points=(100))
+f= VectorMaker(init_Concentration=0, N_points=(100, 10))
+
+f[:, 0] = f[:, 0] + y
+f[:, 1] = f[:, 1] + f[:, 0]
+f[:, 2] = f[:, 2] + f[:, 1]
+f

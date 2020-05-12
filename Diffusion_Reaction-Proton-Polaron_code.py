@@ -19,25 +19,29 @@ In spectrum [H_i]+ is the sum of 2*Mg peak and the tri peak..?
 
 We need to account for how the 2H+ in Mg-vacancies become a Trivalent defect once one of the H+ leaves via proton-polaron. Do we need another K to balance this? Do we instead keep track of loss from each site? probably easier to use a K to balance? 
 
-Ti_Clinohumite to Proton Polaron
+Ti_Clinohumite to Proton Polaron (not explicitly modeling)
 {Ti_m + 2H_si} = [Ti_m + V_si]'' + 2[H_i]+
+# This assumes H in Ti-Cli can only diffuse from M-site
 
-Proton Polaron
+
+1) Mg-site reaction (Proton Polaron)
 [H_i]+ + Fe_m = Fe_m+ + H 
 
-Combined first two equations:
+2) Ti-Clinohumite reaction (Proton Polaron)
 {Ti_m + 2H_si} +2Fe_m = [Ti_m + V_si]'' + 2Fe_m+ + 2H
+# This assumes H can diffuse directly from Ti_Cli
 
 
-K = ([Ti_m + V_si]'' * [H_i]+)^2 /[Ti_m+2H_si]
+K1 = (Fe_m+ * H) / ([H_i]+ * Fe_m)
 
-K = (Fe_m+ * H) / ([H_i]+ * Fe_m)
+K2 = ([Ti_m + V_si]'' * [H]^2 * Fe_m+^2)/ ([Ti_m+2H_si]*Fe_m^2)
+
 
 sum_Ti = [Ti_m + V_si]'' + [Ti_m+2H_si]
 sum_H = [H_i]+ + 2[Ti_m+2H_si] + H
 sum_Fe = Fe_m + Fe_m+
 
-
+Solved for 
 
 eq = solve(eq2,Ti_Cli)
 eq1 = subs(eq1,Ti_Cli, eq)
