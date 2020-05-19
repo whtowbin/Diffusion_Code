@@ -2,7 +2,9 @@
 import numpy as np
 import scipy.linalg as la
 import sympy as sympy
+
 from matplotlib import pyplot as plt
+
 
 # %%
 
@@ -20,71 +22,130 @@ In spectrum [H_i]+ is the sum of 2*Mg peak and the tri peak..?
 We need to account for how the 2H+ in Mg-vacancies become a Trivalent defect once one of the H+ leaves via proton-polaron. Do we need another K to balance this? Do we instead keep track of loss from each site? probably easier to use a K to balance? 
 
 Ti_Clinohumite to Proton Polaron (not explicitly modeling)
-{Ti_m + 2H_si} = [Ti_m + V_si]'' + 2[H_i]+
+{Ti_m + 2H_si} = [Ti_m + V_si]'' + [H_i]+
+
+{Ti_m + 2H_si} = [Ti_si]+ {2H+ + V_m}
 # This assumes H in Ti-Cli can only diffuse from M-site
 
-
+2[H_i]+  = 2H_m
 1) Mg-site reaction (Proton Polaron)
 [H_i]+ + Fe_m = Fe_m+ + H 
+Can also be written as 
+
+{2H+ + V_m} + 2{Fe_m} =  {2Fe3_m+ + V_m} + 2H
+
+or 
+{H_m} + Fe_m = Fe_m+ + H 
+
+Trivalent reaction is
+{2H+ + V_m} + 1{Fe_m} =  {Fe3_m+ + V_m + H_m+} + H
+
 
 2) Ti-Clinohumite reaction (Proton Polaron)
 {Ti_m + 2H_si} +2Fe_m = [Ti_m + V_si]'' + 2Fe_m+ + 2H
 # This assumes H can diffuse directly from Ti_Cli
 
 
-K1 = (Fe_m+ * H) / ([H_i]+ * Fe_m)
 
-K2 = ([Ti_m + V_si]'' * [H]^2 * Fe_m+^2)/ ([Ti_m+2H_si]*Fe_m^2)
+[2fe3+ + V_m] + [v_m +2H_i+] = [2fe3+ 2v_m + 2H_i] 
+[2fe3+ + V_m] + [v_m +2H_i+] + 2[Fe_m] =[2fe2+ + V_m + 2H_i+] + [2fe3+ + V_m]
+
+maybe solve equations in log space 
+
+
+K1 = (Fe_m+ * H) / ([H_m]+ * Fe_m)  #Unclear which way is most favorable should driven by concnetration gradient more than other thing 
+K1 = (Fe_m+ * H^2) / ([H_m]+ )
+
+
+K2 =  ([Ti_si]*[{2H+ + V_m}]) / {Ti_m + 2H_si} should be between 0 and 1. 
+
 
 
 sum_Ti = [Ti_m + V_si]'' + [Ti_m+2H_si]
-sum_H = [H_i]+ + 2[Ti_m+2H_si] + H
+sum_H = 2{2H+ + V_m} + 2[Ti_m+2H_si] + H
 sum_Fe = Fe_m + Fe_m+
 
+think about lag in ferrous iron.  Coordination around M sites. 1 in 10 Msites has an Fe. 
+sum_m = {2H+ + V_m}+ 2{Fe_m}+ 3{2Fe_m+ + V_m}+ {Ti_m + 2H_si}
+Defining the total M-sites might be useful if I include the coordination of Fe near M vacancies. 
+ 1/10 M-sites are  Fe. How can I model this stochastically? 
+# sum_m  seems redundant 
+Total M sites vs total Fe. 
 Solved for 
 
 eq = solve(eq2,Ti_Cli)
 eq1 = subs(eq1,Ti_Cli, eq)
 '''
-K = sympy.symbols("K", positive=True)
-Ti_Cli, Ti_si, H_m, sum_Ti, sum_H = sympy.symbols("Ti_Cli Ti_si H_m sum_Ti sum_H", positive =True)
+"""
+K1, K2 = sympy.symbols("K1 K2", positive=True, real=True)
+Ti_Cli, Ti_si, H_m, H, Fe_m, Fe3_m, sum_Ti, sum_H, sum_Fe, sum_m = sympy.symbols(
+    "Ti_Cli Ti_si H_m H Fe_m Fe3_m sum_Ti sum_H sum_Fe sum_m", positive=True, real=True)
+"""
+#K2 = sympy.symbols("K2", positive=True, real=True)
+Ti_Cli, Ti_si, H_m, H, Fe_m, Fe3_m = sympy.symbols( "Ti_Cli Ti_si H_m H Fe_m Fe3_m", positive=True, real=True)
 
+sum_Ti, sum_H, sum_Fe, sum_m, K1, K2 = 10,20,10,30,1,1
 
 #%%
-eq1 = (sum_Ti - Ti_si - Ti_Cli)
-eq2 = (sum_H - H_m - Ti_Cli)
-eqk = (K * Ti_Cli - (Ti_si * H_m))
+eq_Ti = (sum_Ti - Ti_si - Ti_Cli)
+eq_H = (sum_H - 2*H_m - 2*Ti_Cli + H)
+eq_m = sum_m - H_m - Ti_Cli - 3*Fe3_m
+
+eq_Fe = sum_Fe - 2*Fe_m - 2*Fe3_m
+eq_mfe = sum_m - H_m - Ti_Cli - 3*Fe3_m -3*Fe_m
+eqk1fe = (K1 * (H_m * Fe_m**2)) - (H**2 * Fe3_m) 
+#eqk1 = (K1 * (H_m * Fe_m)) - (H * Fe3_m) # This is a half filled site. Mike has it multiplied differently...  This seems to be the Trivalent equation but we must use the Tri site to account for hydrogen in that site. 
+
+
+# Ferrous Iron Free formulation 
+eqk1 = (K1 * (H_m )) - (H**2 * Fe3_m)
+eqk2 = (K2 * (Ti_Cli)) - (Ti_si * H_m)
+
+#{Ti_m + 2H_si} = [Ti_si] + {2H + + V_m}
+#K1 = (Fe3_m + * H**2) / ([H_i] + * Fe_m**2)
+
+#K2 = ([Ti_m + V_si]'' * [H] ^ 2 * Fe_m+^2) / ([Ti_m+2H_si]*Fe_m ^ 2)
+
+
+# %%
+# Solve for M-sites
+# This equation assumes Fe is an infinite res compared to Fe3+
+# We should think about how to model % of M-sites coordinated by Fe 
+Equations = sympy.nonlinsolve(
+    [eq_H, eq_Ti, eq_m, eqk1, eqk2], [Ti_si, Ti_Cli, H_m,Fe3_m,H])
+
+Equations
+
+# Ti_si, Ti_Cli, H_m, Fe3_m
+
+#%%
+Equations = sympy.nsolve(
+    [eq_H, eq_Ti, eq_m, eqk1, eqk2], [Ti_si, Ti_Cli, H_m, H, Fe3_m],( 200.2,100.2,100.2,100.2,100.2))
+Equations
+# %%
+subeq = Equations1.subs({K1:1, K2:1, H:100, sum_m:500 })
+#  H, sum_Ti, sum_H, sum_m, K1, K2
+sympy.plotting.plot3d(subeq.args[1], (sum_H,0, 500), (sum_Ti,0, 400), )
+
+#subeq = Equations2.subs({sum_Ti: 20, H: 100, sum_H: 200, sum_m: 500})
+#sympy.plotting.plot3d(subeq.args[2], (K1, -100, 100), (K2, -105, 105), )
+#ylabel='K1', xlabel ='k2')
 
 # %%
 
-eq = sympy.solve(eq2,Ti_Cli)
-eq1_new = eq1.subs({Ti_Cli: eq[0]})
-eqk_new = eqk.subs({Ti_Cli: eq[0]})
-# %%
+# Solve for K Ranges
+# This equation assumes Fe is an infinite res compared to Fe3+
+# We should think about how to model % of M-sites coordinated by Fe
+K_Equations = sympy.nonlinsolve(
+    [eq_H, eq_Ti, eq_m, eqk1, eqk2], [K1, K2])
 
+list(K_Equations)
 # %%
-eq = sympy.solve(eq1_new, Ti_si)
-eqk_new = eqk_new.subs(Ti_si, eq[0])
-sympy.solve(eqk_new, H_m)
-
-
-# %%
-f1 = eq1-eq2-eqk
-sympy.solve(f1, Ti_Cli)
-# %%
-
-x, y, z = sympy.symbols('x y z')
-expr = 2*x + y
-expr3 = y - 6*x 
-expr4 = sympy.solveset(exp3, x )
-#exp4 = y/6
-expr2 = expr.subs(x, exp4)
-expr2
-
-# %%
-sympy.linsolve([eq1, eqk, eq2], [Ti_si, Ti_Cli, sum_H])# , dict=True)
-# %%
-Equations = sympy.nonlinsolve([eq1, eqk, eq2], [Ti_si, Ti_Cli, H_m]) 
+# Solve for all species including Fe2+
+# Maybe we just set the amount of Fe2+ low and assume that means we can't diffuse more near the vacancies. 
+#sympy.nonlinsolve(
+Equations = sympy.nonlinsolve(
+    [eq_H, eq_Ti, eq_Fe, eqk1fe, eqk2, eq_mfe], [Ti_si, Ti_Cli, H_m, Fe3_m, Fe_m],)
 str(Equations)
 # %%
 
