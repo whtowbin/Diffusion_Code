@@ -81,6 +81,7 @@ K1, K2 = sympy.symbols("K1 K2", positive=True, real=True)
 Ti_Cli, Ti_si, H_m, H, Fe_m, Fe3_m, sum_Ti, sum_H, sum_Fe, sum_m = sympy.symbols(
     "Ti_Cli Ti_si H_m H Fe_m Fe3_m sum_Ti sum_H sum_Fe sum_m", positive=True, real=True)
 """
+
 #K2 = sympy.symbols("K2", positive=True, real=True)
 Ti_Cli, Ti_si, H_m, H, Fe_m, Fe3_m = sympy.symbols( "Ti_Cli Ti_si H_m H Fe_m Fe3_m", positive=True, real=True)
 
@@ -88,7 +89,7 @@ sum_Ti, sum_H, sum_Fe, sum_m, K1, K2 = 10,20,10,30,1,1
 
 #%%
 eq_Ti = (sum_Ti - Ti_si - Ti_Cli)
-eq_H = (sum_H - 2*H_m - 2*Ti_Cli + H)
+eq_H = (sum_H - 2*H_m - 2*Ti_Cli - H)
 eq_m = sum_m - H_m - Ti_Cli - 3*Fe3_m
 
 eq_Fe = sum_Fe - 2*Fe_m - 2*Fe3_m
@@ -112,16 +113,74 @@ eqk2 = (K2 * (Ti_Cli)) - (Ti_si * H_m)
 # This equation assumes Fe is an infinite res compared to Fe3+
 # We should think about how to model % of M-sites coordinated by Fe 
 Equations = sympy.nonlinsolve(
-    [eq_H, eq_Ti, eq_m, eqk1, eqk2], [Ti_si, Ti_Cli, H_m,Fe3_m,H])
+    [eq_H, eq_Ti, eq_m, eqk1, eqk2], [Ti_si, Ti_Cli, H_m, Fe3_m,H])
 
 Equations
 
 # Ti_si, Ti_Cli, H_m, Fe3_m
 
 #%%
-Equations = sympy.nsolve(
+Values = sympy.nsolve(
     [eq_H, eq_Ti, eq_m, eqk1, eqk2], [Ti_si, Ti_Cli, H_m, H, Fe3_m],( 200.2,100.2,100.2,100.2,100.2))
-Equations
+Values
+# %%
+n= 2
+Values = [-1, -2, -3, -4, -5]
+Values_Matrix=np.zeros((n,n,n,n,n,n,5))
+
+sum_Ti_list = np.arange(0,500,n)
+sum_H_list = np.arange(0, 500, n)
+sum_Fe_list = np.arange(0, 500, n)
+sum_m_list = np.arange(0, 500, n)
+K1_list = np.logspace(-2,2,n)
+K2_list = np.logspace(-2, 2, n)
+        
+
+                                    
+
+for idx0, sum_Ti in enumerate(sum_Ti_list):
+    for idx1, sum_H in enumerate(sum_H_list):
+         for idx2,sum_Fe in enumerate(sum_Fe_list): 
+             for idx3,sum_m in enumerate(sum_m_list): 
+                 for idx4,K1 in enumerate(K1_list):
+                     for idx5,K2 in enumerate(K2_list):
+                        #Values = [-1, -1, -1, -1, -1]
+                        while min(Values) <= 0:
+                            Ti_si_guess, Ti_Cli_guess, H_m_guess, H_guess, Fe3_m_guess = np.random.randint(0,500,5)
+                            try:
+                                Values = sympy.nsolve(
+                                    [eq_H, eq_Ti, eq_m, eqk1, eqk2], 
+                                    [Ti_si, Ti_Cli, H_m, H, Fe3_m], 
+
+                                    (sum_Ti-Ti_Cli_guess, Ti_Cli_guess,
+                                     H_m_guess, sum_H - 2*H_m_guess- 2*Ti_Cli_guess, 
+                                     (sum_m - H_m_guess- Ti_Cli_guess)/3
+                                     ))
+                            except:
+                                #Values = [-1, -1, -1, -1, -1]
+                                pass
+                            #Values_Matrix[idx0, idx1, idx2, idx3, idx4,idx5] = np.array(list(Values), float)
+                            print(Values)
+
+"""
+eq_Ti = (sum_Ti - Ti_si - Ti_Cli)
+eq_H = (sum_H - 2*H_m - 2*Ti_Cli - H)
+eq_m = sum_m - H_m - Ti_Cli - 3*Fe3_m
+"""
+
+"""
+[Ti_si, Ti_Cli, H_m, H, Fe3_m]
+
+sum_Ti-Ti_Cli_guess
+
+Ti_Cli_guess
+
+H_m_guess
+
+sum_H - 2*H_m_guess - 2*Ti_Cli_guess
+
+(sum_m - H_m_guess - Ti_Cli_guess)/3
+"""
 # %%
 subeq = Equations1.subs({K1:1, K2:1, H:100, sum_m:500 })
 #  H, sum_Ti, sum_H, sum_m, K1, K2
