@@ -85,22 +85,22 @@ Ti_Cli, Ti_si, H_m, H, Fe_m, Fe3_m, sum_Ti, sum_H, sum_Fe, sum_m = sympy.symbols
 #K2 = sympy.symbols("K2", positive=True, real=True)
 Ti_Cli, Ti_si, H_m, H, Fe_m, Fe3_m = sympy.symbols( "Ti_Cli Ti_si H_m H Fe_m Fe3_m", positive=True, real=True)
 
-sum_Ti, sum_H, sum_Fe, sum_m, K1, K2 = 10,20,10,30,1,1
+#sum_Ti, sum_H, sum_Fe, sum_m, K1, K2 = 10, 20, 10, 30, 1, 1
 
 #%%
+# Ferrous Iron Free formulation
 eq_Ti = (sum_Ti - Ti_si - Ti_Cli)
 eq_H = (sum_H - 2*H_m - 2*Ti_Cli - H)
 eq_m = sum_m - H_m - Ti_Cli - 3*Fe3_m
 
-eq_Fe = sum_Fe - 2*Fe_m - 2*Fe3_m
-eq_mfe = sum_m - H_m - Ti_Cli - 3*Fe3_m -3*Fe_m
-eqk1fe = (K1 * (H_m * Fe_m**2)) - (H**2 * Fe3_m) 
+eqk1 = (K1 * (H_m)) - (H**2 * Fe3_m)
+eqk2 = (K2 * (Ti_Cli)) - (Ti_si * H_m)
+
+#eq_Fe = sum_Fe - 2*Fe_m - 2*Fe3_m
+#eq_mfe = sum_m - H_m - Ti_Cli - 3*Fe3_m -3*Fe_m
+#eqk1fe = (K1 * (H_m * Fe_m**2)) - (H**2 * Fe3_m) 
 #eqk1 = (K1 * (H_m * Fe_m)) - (H * Fe3_m) # This is a half filled site. Mike has it multiplied differently...  This seems to be the Trivalent equation but we must use the Tri site to account for hydrogen in that site. 
 
-
-# Ferrous Iron Free formulation 
-eqk1 = (K1 * (H_m )) - (H**2 * Fe3_m)
-eqk2 = (K2 * (Ti_Cli)) - (Ti_si * H_m)
 
 #{Ti_m + 2H_si} = [Ti_si] + {2H + + V_m}
 #K1 = (Fe3_m + * H**2) / ([H_i] + * Fe_m**2)
@@ -113,54 +113,93 @@ eqk2 = (K2 * (Ti_Cli)) - (Ti_si * H_m)
 # This equation assumes Fe is an infinite res compared to Fe3+
 # We should think about how to model % of M-sites coordinated by Fe 
 Equations = sympy.nonlinsolve(
-    [eq_H, eq_Ti, eq_m, eqk1, eqk2], [Ti_si, Ti_Cli, H_m, Fe3_m,H])
+    [eq_H, eq_Ti, eq_m, eqk1, eqk2], [Ti_si, Ti_Cli, H_m, Fe3_m, H])
 
 Equations
 
 # Ti_si, Ti_Cli, H_m, Fe3_m
 
 #%%
+sum_Ti, sum_H, sum_Fe, sum_m, K1, K2 = 10, 600000, 100000, 300, 1000, 10000
+
 Values = sympy.nsolve(
-    [eq_H, eq_Ti, eq_m, eqk1, eqk2], [Ti_si, Ti_Cli, H_m, H, Fe3_m],( 200.2,100.2,100.2,100.2,100.2))
+    [eq_Ti, eq_m, eqk1, eqk2,eq_H],
+    [Ti_si, Ti_Cli, H_m, H, Fe3_m],
+    ( 5,5,5,5,59))
+
 Values
 # %%
-n= 2
+"""
+A few thoughts on parameter spaces to search. 
+as we have it set up the only parameter that changes in our model between timesteps is the Hydrogen concentration. Maybe we can generate a new lookup table everytime we run the diffusion model and only search the space limited by the max hydrogen(sum_h) concentrations and the other set parameters.
+
+I am a bit worried that our reactions don't allow for hysteresis i.e. what happened in the previous timesteps doesnt effect hydrogen incorporation in the subsequent. Hydration and dehydration are perfectly reversible. 
+
+As we diffuse water out we should expect Fe3+ to grow and limit diffusion. Maybe this set up is actually fine since we are contraining the total number of M-sites but this is worth considering.
+
+We should set out initial total Msites based on the assumptions we have about the amount of Fe#+ preexisting in the crystal, The amount of Ti in the crstal, and the amount of water. It would be great to try to fit elizabeth's data besides Anna's 
+"""
+n= 5
 Values = [-1, -2, -3, -4, -5]
 Values_Matrix=np.zeros((n,n,n,n,n,n,5))
 
-sum_Ti_list = np.arange(0,500,n)
-sum_H_list = np.arange(0, 500, n)
-sum_Fe_list = np.arange(0, 500, n)
-sum_m_list = np.arange(0, 500, n)
+sum_Ti_list = np.linspace(1,500,n)
+sum_H_list = np.linspace(1, 500, n)
+sum_Fe_list = np.linspace(1, 500, n)
+sum_m_list = np.linspace(1, 500, n)
 K1_list = np.logspace(-2,2,n)
 K2_list = np.logspace(-2, 2, n)
         
 
-                                    
+# I think the problem might be that the equations are refering to sympy equations that are set up with the variable before they are assigned in the loop              
 
 for idx0, sum_Ti in enumerate(sum_Ti_list):
     for idx1, sum_H in enumerate(sum_H_list):
-         for idx2,sum_Fe in enumerate(sum_Fe_list): 
+         for idx2,sum_Fe in enumerate(sum_Fe_list): # This needs to be cut...
              for idx3,sum_m in enumerate(sum_m_list): 
                  for idx4,K1 in enumerate(K1_list):
                      for idx5,K2 in enumerate(K2_list):
-                        #Values = [-1, -1, -1, -1, -1]
-                        while min(Values) <= 0:
-                            Ti_si_guess, Ti_Cli_guess, H_m_guess, H_guess, Fe3_m_guess = np.random.randint(0,500,5)
+                        root_values = [-1, -2, -3, -4, -5]
+                        print('next one')
+                        print(sum_Ti,
+                              sum_H,
+                              sum_Fe,
+                              sum_m,
+                              K1,
+                              K2)
+                        while min(root_values) < 0:
+                        
+                            #Ti_si_guess, Ti_Cli_guess, H_m_guess, H_guess,Fe3_m_guess = np.random.randint(0,100,5)
+                            #Ti_si_guess= np.random.randint(0,sum_Ti+ 1) 
+                            Ti_Cli_guess = np.random.randint(0,sum_Ti+ 1)
+                            H_m_guess= np.random.randint(0,sum_H+1)
+                            #H_guess = np.random.randint(0, sum_H)
+                            #Fe3_m_guess= np.random.randint(0,sum_m) 
+                            
+                            #We should start our guess with the last sucessful guess in the column we are iterating. 
+                            # we can start our guesses randomly for the column we are iterating but also we can try starting them with the first sucessful solution of the previous column. 
                             try:
                                 Values = sympy.nsolve(
                                     [eq_H, eq_Ti, eq_m, eqk1, eqk2], 
                                     [Ti_si, Ti_Cli, H_m, H, Fe3_m], 
 
                                     (sum_Ti-Ti_Cli_guess, Ti_Cli_guess,
-                                     H_m_guess, sum_H - 2*H_m_guess- 2*Ti_Cli_guess, 
-                                     (sum_m - H_m_guess- Ti_Cli_guess)/3
-                                     ))
+                                        H_m_guess, sum_H - 2*H_m_guess- 2*Ti_Cli_guess, 
+                                        (sum_m - H_m_guess- Ti_Cli_guess)/3
+                                        ))
+                                
                             except:
                                 #Values = [-1, -1, -1, -1, -1]
-                                pass
+                                print('bad values')
+                                Ti_Cli_guess = np.random.randint(0, sum_Ti + 1)
+                                H_m_guess = np.random.randint(0, sum_H+1)
                             #Values_Matrix[idx0, idx1, idx2, idx3, idx4,idx5] = np.array(list(Values), float)
-                            print(Values)
+
+                            if min(list(Values)) > 0:
+                                print(Values)
+                                root_values=list(Values)
+
+# Use the previous values as the starting guess for the next guess. Only use rand if fails. 
 
 """
 eq_Ti = (sum_Ti - Ti_si - Ti_Cli)
