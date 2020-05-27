@@ -161,6 +161,8 @@ Return
     Fe3_m = u[4]
     """
 
+# We should update this initial to calculate sum_m. That is because we have an initial understanding of Fe3+ I forget the paper but I think it is generally ~3%
+#  
     u0 = initial_root_find(sum_Ti, sum_H, sum_m, K1, K2)
 
     u = ( 
@@ -187,7 +189,8 @@ Return
 
         u = root(F, u, (sum_Ti, sum_H_loop, sum_m, K1, K2), method='krylov').x
         
-    return {'H_m_loop': u[2], 'Ti_Si_loop': u[0], 'Ti_Cli_loop': u[1], 'Fe3_m': u[4], 'sum_H_loop': sum_H_loop}
+    return {'H_m_loop': u[2], 'Ti_Si_loop': u[0], 'Ti_Cli_loop': u[1], 'Fe3_m': u[4], 'sum_H_loop': sum_H_loop, 'H_loop': u[3]}
+
 
 # %%
 
@@ -201,17 +204,18 @@ dx = profile_length / (N_points - 1)  # Microns
 
 #dicts= time_steper(sum_H =100, sum_Ti = 60, K=0.8, Diff_Matrix =B, timesteps = 60*60, N_points= 100, boundaries=None)
 
-dicts = time_steper(sum_Ti=50, sum_H=200, sum_m=500, K1=1, K2=1, Diffusivity=DH2O_Ol(
-    2200), timesteps=60, dt=dt, dx=10, N_points=N_points, bound_concentration=0)
+dicts = time_steper(sum_Ti=100, sum_H=200, sum_m=250, K1=1, K2=2, Diffusivity=DH2O_Ol(
+    1200), timesteps=60*5, dt=dt, dx=10, N_points=N_points, bound_concentration=0)
 # %%
 fig, ax = plt.subplots(figsize=(12, 6))
-plt.plot(dicts['H_m_loop'], Label='H_m')
-plt.plot(dicts['Ti_Cli_loop'], Label='Ti_Cli')
+plt.plot(2*dicts['H_m_loop'], Label='H_m')
+plt.plot(2*dicts['Ti_Cli_loop'], Label='Ti_Cli')
 plt.plot(dicts['sum_H_loop'], Label='Total_H')
-plt.plot(dicts['Fe3_m'], Label='Fe3+')
+plt.plot(2*dicts['Fe3_m'], Label='Fe3+')
+plt.plot(dicts['H_loop'], Label='H')
 #plt.plot(dicts['Ti_Si_loop'], Label='Ti_Si')
 
-
+#eq_H = (sum_H - 2*H_m - 2*Ti_Cli - H)
 plt.legend(prop={'size': 20})
 
 

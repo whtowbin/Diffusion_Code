@@ -37,9 +37,17 @@ Can also be written as
 or 
 {H_m} + Fe_m = Fe_m+ + H 
 
+!!!!!
 Trivalent reaction is
 {2H+ + V_m} + 1{Fe_m} =  {Fe3_m+ + V_m + H_m+} + H
+H_m + Fe_m = Tri_m + H
+{Fe3_m+ + V_m + H_m+} + Fe2+ = {2Fe3_m+ + V_m} + H
+Tri_m + Fe_m = 2Fe3_m + H 
 
+sum_Ti = [Ti_m + V_si]'' + [Ti_m+2H_si]
+sum_H = 2{2H+ + V_m} + 2[Ti_m+2H_si] + H + Tri_m
+sum_Fe = Fe_m + Fe3_m + Tri_m
+!!!!!
 
 2) Ti-Clinohumite reaction (Proton Polaron)
 {Ti_m + 2H_si} +2Fe_m = [Ti_m + V_si]'' + 2Fe_m+ + 2H
@@ -75,11 +83,31 @@ Solved for
 
 eq = solve(eq2,Ti_Cli)
 eq1 = subs(eq1,Ti_Cli, eq)
+
+
+
+!!!!!
+Trivalent reaction is:
+{2H+ + V_m} + 1{Fe_m} =  {Fe3_m+ + V_m + H_m+} + H
+H_m + Fe_m = Tri_m + H
+{Fe3_m+ + V_m + H_m+} + Fe2+ = {2Fe3_m+ + V_m} + H
+Tri_m + Fe_m = 2Fe3_m + H 
+
+sum_Ti = [Ti_m + V_si]'' + [Ti_m+2H_si]
+sum_H = 2{2H+ + V_m} + 2[Ti_m+2H_si] + H + Tri_m
+sum_Fe = Fe_m + Fe3_m + Tri_m
+
+K3 = (Tri_m* H) / (H_m * Fe_m) ~= (Tri_m* H) / (H_m)
+K4 =  (Fe3_m * H)/ (Tri_m* H)
+
+!!!!!
 '''
 """
 K1, K2 = sympy.symbols("K1 K2", positive=True, real=True)
 Ti_Cli, Ti_si, H_m, H, Fe_m, Fe3_m, sum_Ti, sum_H, sum_Fe, sum_m = sympy.symbols(
     "Ti_Cli Ti_si H_m H Fe_m Fe3_m sum_Ti sum_H sum_Fe sum_m", positive=True, real=True)
+
+
 """
 
 #K2 = sympy.symbols("K2", positive=True, real=True)
