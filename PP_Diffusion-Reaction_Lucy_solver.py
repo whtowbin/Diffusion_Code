@@ -45,12 +45,14 @@ u0 = np.array([Ti_si,
       H,
       Fe3_m])
 """
-Ti_Cli_guess= np.array([10,20,30])
-H_m_guess = np.array([30,20,10])
+#Ti_Cli_guess= np.array([10,20,30])
+#H_m_guess = np.array([30,20,10])
 
+Ti_Cli_guess = np.array([10])
+H_m_guess = np.array([30])
 u0 =np.array([sum_Ti-Ti_Cli_guess, Ti_Cli_guess,H_m_guess, sum_H - 2*H_m_guess - 2*Ti_Cli_guess,(sum_m - H_m_guess - Ti_Cli_guess)/3 ])
 
-u0 = np.array([5., 5., 10., 10., 100.])
+#u0 = np.array([5., 5., 10., 10., 100.])
 #root(residual, guess, method='krylov', options={'disp': True})
 
 u = fsolve(F,u0,(sum_Ti,sum_H,sum_m,K1,K2))
@@ -114,13 +116,10 @@ def initial_root_find(sum_Ti, sum_H, sum_m, K1, K2):
             H_m_guess = np.random.randint(0, sum_H+1)
 
             try:
-                H_m_guess = np.array([30, 20, 10])
+                
+                u0 = np.array([sum_Ti-Ti_Cli_guess, Ti_Cli_guess, H_m_guess, sum_H - 2*H_m_guess - 2*Ti_Cli_guess, (sum_m - H_m_guess - Ti_Cli_guess)/3])
 
-                u0 = np.array([sum_Ti-Ti_Cli_guess, Ti_Cli_guess, H_m_guess, sum_H -
-                    2*H_m_guess - 2*Ti_Cli_guess, (sum_m - H_m_guess - Ti_Cli_guess)/3])
-
-                u0 = np.array([5., 5., 10., 10., 100.])
-
+            
                 root_values = fsolve(F, u0, (sum_Ti, sum_H, sum_m, K1, K2))
 
             except:
@@ -131,7 +130,7 @@ def initial_root_find(sum_Ti, sum_H, sum_m, K1, K2):
 
 
 # %%
-sum_Ti, sum_H, sum_m, K1, K2 = 10, 40, 100, 1, 1
+sum_Ti, sum_H, sum_m, K1, K2 = 30, 40, 100, 1, 1
 initial_root_find(sum_Ti, sum_H, sum_m, K1, K2)
 
 # %%
