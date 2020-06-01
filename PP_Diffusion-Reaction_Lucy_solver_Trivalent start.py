@@ -148,14 +148,15 @@ def initial_root_find(sum_Ti, sum_H, sum_m, K1, K2, K3):
     bad_values = 0
     while min(root_values) < 0:
 
-        Ti_Cli_guess = np.random.randint(0, sum_Ti + 1)
-        H_m_guess = np.random.randint(0, (sum_H - 2*Ti_Cli_guess)/2 +1)
-        Tri_m_guess = np.random.randint(
-            0, (sum_m - H_m_guess - Ti_Cli_guess)/2+1)
+
 
 
 # sum_H = 2*H_m + 2*Ti_Cli + H + Tri_m
         try:
+            Ti_Cli_guess = np.random.randint(0, sum_Ti + 1)
+            H_m_guess = np.random.randint(0, (sum_H - 2*Ti_Cli_guess)/2 + 1)
+            Tri_m_guess = np.random.randint(0, (sum_m - H_m_guess - Ti_Cli_guess)/2+1)
+            
             u0 = np.array(
                 [sum_Ti-Ti_Cli_guess, Ti_Cli_guess,
                  H_m_guess, sum_H - 2 * H_m_guess - 2*Ti_Cli_guess,
@@ -166,10 +167,6 @@ def initial_root_find(sum_Ti, sum_H, sum_m, K1, K2, K3):
 
         except:
             print('bad values:' + str(bad_values))
-            Ti_Cli_guess = np.random.randint(0, sum_Ti + 1)
-            H_m_guess = np.random.randint(0, sum_H+1)
-            Tri_m_guess = np.random.randint(
-                0, (sum_m - H_m_guess - Ti_Cli_guess)/2+1)
             bad_values += 1
             if bad_values > 20:
                 print(
